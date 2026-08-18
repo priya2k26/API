@@ -66,8 +66,8 @@ def read_root():
 @app.get("/items", response_model=dict)
 def list_items(db: Session = Depends(get_db)):
     items = db.query(DBItem).all()
-    # Format to match the previous response style
-    items_dict = {item.id: item for item in items}
+    # Convert SQLAlchemy models to Pydantic models for serialization
+    items_dict = {item.id: ItemResponse.from_orm(item) for item in items}
     return {"items": items_dict}
 
 @app.get("/items/{item_id}", response_model=dict)
@@ -75,7 +75,7 @@ def read_item(item_id: int, db: Session = Depends(get_db)):
     item = db.query(DBItem).filter(DBItem.id == item_id).first()
     if not item:
         raise HTTPException(status_code=404, detail="Item not found")
-    return {"item_id": item_id, "item": item}
+    return {"item_id": item_id, "item": ItemResponse.from_orm(item)}
 
 @app.post("/items", status_code=201)
 def create_item(item: ItemCreate, db: Session = Depends(get_db)):
@@ -83,7 +83,7 @@ def create_item(item: ItemCreate, db: Session = Depends(get_db)):
     db.add(db_item)
     db.commit()
     db.refresh(db_item)
-    return {"message": "Item created successfully", "item_id": db_item.id, "item": db_item}
+    return {"message": "Item created successfully", "item_id": db_item.id, "item": ItemResponse.from_orm(db_item)}
 
 @app.put("/items/{item_id}")
 def update_item(item_id: int, item: ItemUpdate, db: Session = Depends(get_db)):
@@ -97,7 +97,7 @@ def update_item(item_id: int, item: ItemUpdate, db: Session = Depends(get_db)):
     
     db.commit()
     db.refresh(db_item)
-    return {"message": "Item updated successfully", "item_id": item_id, "item": db_item}
+    return {"message": "Item updated successfully", "item_id": item_id, "item": ItemResponse.from_orm(db_item)}
 
 @app.delete("/items/{item_id}")
 def delete_item(item_id: int, db: Session = Depends(get_db)):
