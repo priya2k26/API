@@ -48,7 +48,7 @@ class ItemUpdate(BaseModel):
 class ItemResponse(ItemBase):
     id: int
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 # Dependency to get DB session
 def get_db():
